@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sri Amman Jewellery</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="top-banner">
+        TODAY'S LIVE RATE: GOLD (22k) - ₹6,750/g | SILVER - ₹88.00/g | BIS HALLMARKED | PAN-INDIA INSURED SHIPPING.
+    </div>
+
+    <header>
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Sri Amman Jewellery Logo" class="logo" width="60" height="60">
+            <h1>SRI AMMAN JEWELLERY</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">COLLECTIONS</a></li>
+                <li><a href="#">GOLD</a></li>
+                <li><a href="#">DIAMOND</a></li>
+                <li><a href="#">SILVER</a></li>
+                <li><a href="#">COINS</a></li>
+                <li><a href="#">GIFTS</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero" style="background-image: url('https://images.unsplash.com/photo-1758995116383-f51775896add?q=80&w=1470&auto=format&fit=crop');">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h2>DIVINE CRAFTSMANSHIP.<br>ETERNAL ELEGANCE.</h2>
+            <button class="btn-primary">EXPLORE WEDDING COLLECTION</button>
+        </div>
+    </section>
+
+    <section class="featured">
+        <h3>FEATURED COLLECTIONS</h3>
+        <div class="featured-grid">
+            <div class="feature-card" style="background-image: url('https://images.unsplash.com/photo-1620766182966-c6eb5ed2b788?q=80&w=748&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');">
+                <div class="card-overlay"></div>
+                <h4>TEMPLE</h4>
+            </div>
+            <div class="feature-card" style="background-image: url('https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=600&auto=format&fit=crop');">
+                <div class="card-overlay"></div>
+                <h4>CONTEMPORARY</h4>
+            </div>
+            <div class="feature-card" style="background-image: url('https://images.unsplash.com/photo-1599643477877-530eb83abc8e?q=80&w=600&auto=format&fit=crop');">
+                <div class="card-overlay"></div>
+                <h4>DIAMOND</h4>
+            </div>
+        </div>
+    </section>
+
+    <section class="new-arrivals">
+        <h3>NEW ARRIVALS</h3>
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="product-card">
+                <span class="badge">NEW</span>
+                <img src="{{ product.image }}" alt="{{ product.name }}" loading="lazy" width="400" height="400">
+                <div class="product-info">
+                    <p>{{ product.name }}</p>
+                    <p class="price">Rs. {{ product.price }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+</body>
+</html>

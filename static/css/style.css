@@ -1,0 +1,258 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+body {
+    background-color: #e5e6d8; 
+    color: #000;
+    overflow-x: hidden;
+}
+
+/* Top Banner */
+.top-banner {
+    background-color: #d19e45; 
+    text-align: center;
+    padding: 8px 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+/* Header */
+header {
+    text-align: center;
+    padding: 12px 16px;
+}
+
+.logo-container img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto;
+}
+
+.logo-container h1 {
+    font-size: 1rem;
+    letter-spacing: 1px;
+    margin-top: 8px;
+}
+
+nav ul {
+    list-style: none;
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 20px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    padding: 4px 0;
+}
+
+/* Hero Section */
+.hero {
+    height: 280px;
+    min-height: 220px;
+    background-size: cover;
+    background-position: center 55%;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; 
+    padding: 20px 5%;
+    overflow: hidden;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.1), rgba(0,0,0,0.7));
+}
+
+.hero-content {
+    text-align: center;
+    color: #e3bc73; 
+    position: relative;
+    z-index: 2;
+}
+
+.hero h2 {
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+}
+
+.btn-primary {
+    background-color: #d19e45;
+    color: black;
+    border: none;
+    padding: 10px 18px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #e3bc73;
+}
+
+/* Sections */
+h3 {
+    text-align: center;
+    font-size: 1.3rem;
+    margin: 24px 0 20px;
+    letter-spacing: 2px;
+}
+
+/* Featured Collections */
+.featured-grid {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 0 16px;
+    flex-wrap: wrap;
+}
+
+.feature-card {
+    width: 100%;
+    max-width: 300px;
+    height: 160px;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.card-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); /* Darkens the image so text is readable */
+}
+
+.feature-card h4 {
+    color: white;
+    position: relative;
+    z-index: 2;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.8);
+}
+
+/* New Arrivals Grids */
+.product-grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 0 16px;
+    margin-bottom: 32px;
+}
+
+/* Tablet */
+@media (min-width: 480px) {
+    .top-banner { font-size: 0.75rem; }
+    .logo-container img { width: 54px; height: 54px; }
+    .logo-container h1 { font-size: 1.1rem; }
+    nav a { font-size: 0.85rem; }
+    .hero { height: 350px; min-height: 300px; }
+    .hero h2 { font-size: 1.8rem; }
+    .btn-primary { padding: 12px 22px; font-size: 0.85rem; }
+    h3 { font-size: 1.5rem; margin: 32px 0 24px; }
+    .feature-card { height: 180px; }
+    .feature-card h4 { font-size: 1.35rem; }
+    .product-card img { height: 220px; }
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+    header { padding: 20px 0; }
+    .logo-container img { width: 60px; height: 60px; }
+    .logo-container h1 { font-size: 1.2rem; margin-top: 10px; }
+    nav ul { margin-top: 20px; gap: 30px; }
+    nav a { font-size: 0.9rem; }
+    .hero { height: 450px; min-height: 400px; padding: 20px 10%; }
+    .hero h2 { font-size: 2.5rem; margin-bottom: 20px; }
+    .btn-primary { padding: 12px 24px; font-size: 0.9rem; }
+    h3 { font-size: 1.8rem; margin: 40px 0 30px; }
+    .featured-grid, .product-grid { padding: 0 5%; gap: 20px; }
+    .feature-card { max-width: 300px; height: 200px; }
+    .feature-card h4 { font-size: 1.5rem; }
+    .product-card { max-width: 250px; }
+    .product-card img { height: 250px; }
+    .product-grid { margin-bottom: 50px; }
+}
+
+/* Large desktop - keep layouts contained */
+@media (min-width: 1200px) {
+    body { max-width: 1400px; margin: 0 auto; }
+}
+
+.product-card {
+    background: #fff;
+    width: 100%;
+    max-width: 280px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.product-card img {
+    display: block;
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    object-position: center;
+}
+
+.badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #a01d23;
+    color: white;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    font-family: sans-serif;
+    z-index: 2;
+}
+
+.product-info {
+    padding: 15px;
+    font-family: sans-serif;
+}
+
+.product-info p {
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+
+.product-info .price {
+    font-weight: bold;
+}
