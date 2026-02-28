@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Sri Amman Jewellery</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
     <div class="top-banner">
-        TODAY'S LIVE RATE: GOLD (22k) - ₹{{ gold_price }}/g | SILVER - ₹{{ silver_price }}/g | BIS HALLMARKED | PAN-INDIA INSURED SHIPPING.
+        LIVE RATE (INR): GOLD 22k — ₹{{ gold_price }}/g | SILVER — ₹{{ silver_price }}/g
+        {% if last_updated %} <span class="rate-updated">(Updated {{ last_updated }})</span>{% endif %}
     </div>
 
     <header>

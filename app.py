@@ -1,18 +1,31 @@
 import os
+import time
 import requests
+from pathlib import Path
 from flask import Flask, render_template
+from dotenv import load_dotenv
 
+# Load .env from project root (Render uses env vars directly)
+load_dotenv(Path(__file__).parent / ".env")
 app = Flask(__name__)
 
 # Fallback prices when API fails or no key
 DEFAULT_GOLD_22K = "6,750"
 DEFAULT_SILVER = "88.00"
 
+# Cache live rates for 1 hour (saves API quota, improves reliability)
+_rates_cache = {"gold": None, "silver": None, "updated": 0, "timestamp": None}
+CACHE_SECONDS = 3600  # 1 hour
+
 def fetch_live_rates():
     """Fetch live gold (22k) and silver prices in INR/gram using MetalpriceAPI (free tier: 100 req/month)."""
+    now = time.time()
+    if _rates_cache["gold"] and (now - _rates_cache["updated"]) < CACHE_SECONDS:
+        return _rates_cache["gold"], _rates_cache["silver"], _rates_cache.get("timestamp")
+
     api_key = os.environ.get("METALPRICEAPI_KEY")
     if not api_key:
-        return None, None
+        return None, None, None
 
     try:
         url = "https://api.metalpriceapi.com/v1/latest"
@@ -21,7 +34,7 @@ def fetch_live_rates():
         data = resp.json()
 
         if not data.get("success") or "rates" not in data:
-            return None, None
+            return None, None, None
 
         rates = data["rates"]
         inr_per_usd = rates.get("INR")
@@ -29,7 +42,7 @@ def fetch_live_rates():
         usd_per_oz_silver = rates.get("USDXAG")
 
         if not all([inr_per_usd, usd_per_oz_gold, usd_per_oz_silver]):
-            return None, None
+            return None, None, None
 
         # 1 troy oz = 31.1035 grams; 22k = 22/24 of 24k gold
         grams_per_oz = 31.1035
@@ -38,10 +51,18 @@ def fetch_live_rates():
 
         gold_str = f"{gold_22k_per_gram_inr:,.0f}"
         silver_str = f"{silver_per_gram_inr:,.2f}"
-
-        return gold_str, silver_str
+        from datetime import datetime
+        ts = datetime.now().strftime("%d %b, %I:%M %p")
+        _rates_cache["gold"] = gold_str
+        _rates_cache["silver"] = silver_str
+        _rates_cache["updated"] = now
+        _rates_cache["timestamp"] = ts
+        return gold_str, silver_str, ts
     except Exception:
-        return None, None
+        # Use cached values if API fails and we have them
+        if _rates_cache["gold"]:
+            return _rates_cache["gold"], _rates_cache["silver"], _rates_cache.get("timestamp")
+        return None, None, None
 
 # In-memory database with Live Unsplash URLs for immediate rendering
 NEW_ARRIVALS = [
@@ -73,12 +94,12 @@ NEW_ARRIVALS = [
 
 @app.route('/')
 def home():
-    gold_price, silver_price = fetch_live_rates()
+    gold_price, silver_price, last_updated = fetch_live_rates()
     if gold_price is None:
         gold_price = DEFAULT_GOLD_22K
     if silver_price is None:
         silver_price = DEFAULT_SILVER
-    return render_template('index.html', products=NEW_ARRIVALS, gold_price=gold_price, silver_price=silver_price)
+    return render_template('index.html', products=NEW_ARRIVALS, gold_price=gold_price, silver_price=silver_price, last_updated=last_updated)
 
 if __name__ == '__main__':
     # host='0.0.0.0' = accessible on local network (Redmi as server)
