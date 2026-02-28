@@ -1,0 +1,9 @@
+# Render Blueprint - deploy from GitHub
+# Docs: https://render.com/docs/deploy-flask
+services:
+  - type: web
+    name: sri-amman-jewellery
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
