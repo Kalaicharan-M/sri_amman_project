@@ -1,6 +1,47 @@
+import os
+import requests
 from flask import Flask, render_template
 
 app = Flask(__name__)
+
+# Fallback prices when API fails or no key
+DEFAULT_GOLD_22K = "6,750"
+DEFAULT_SILVER = "88.00"
+
+def fetch_live_rates():
+    """Fetch live gold (22k) and silver prices in INR/gram using MetalpriceAPI (free tier: 100 req/month)."""
+    api_key = os.environ.get("METALPRICEAPI_KEY")
+    if not api_key:
+        return None, None
+
+    try:
+        url = "https://api.metalpriceapi.com/v1/latest"
+        params = {"api_key": api_key, "base": "USD", "currencies": "INR,XAU,XAG"}
+        resp = requests.get(url, params=params, timeout=5)
+        data = resp.json()
+
+        if not data.get("success") or "rates" not in data:
+            return None, None
+
+        rates = data["rates"]
+        inr_per_usd = rates.get("INR")
+        usd_per_oz_gold = rates.get("USDXAU")
+        usd_per_oz_silver = rates.get("USDXAG")
+
+        if not all([inr_per_usd, usd_per_oz_gold, usd_per_oz_silver]):
+            return None, None
+
+        # 1 troy oz = 31.1035 grams; 22k = 22/24 of 24k gold
+        grams_per_oz = 31.1035
+        gold_22k_per_gram_inr = (usd_per_oz_gold / grams_per_oz) * (22 / 24) * inr_per_usd
+        silver_per_gram_inr = (usd_per_oz_silver / grams_per_oz) * inr_per_usd
+
+        gold_str = f"{gold_22k_per_gram_inr:,.0f}"
+        silver_str = f"{silver_per_gram_inr:,.2f}"
+
+        return gold_str, silver_str
+    except Exception:
+        return None, None
 
 # In-memory database with Live Unsplash URLs for immediate rendering
 NEW_ARRIVALS = [
@@ -32,7 +73,12 @@ NEW_ARRIVALS = [
 
 @app.route('/')
 def home():
-    return render_template('index.html', products=NEW_ARRIVALS)
+    gold_price, silver_price = fetch_live_rates()
+    if gold_price is None:
+        gold_price = DEFAULT_GOLD_22K
+    if silver_price is None:
+        silver_price = DEFAULT_SILVER
+    return render_template('index.html', products=NEW_ARRIVALS, gold_price=gold_price, silver_price=silver_price)
 
 if __name__ == '__main__':
     # host='0.0.0.0' = accessible on local network (Redmi as server)
