@@ -2,30 +2,38 @@ import os
 import time
 import requests
 from pathlib import Path
-from flask import Flask, render_template
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from flask import Flask, render_template, request
 from dotenv import load_dotenv
 
 # Load .env from project root (Render uses env vars directly)
 load_dotenv(Path(__file__).parent / ".env")
 app = Flask(__name__)
 
-# Fallback prices when API fails or no key
+# Fallback when API fails
 DEFAULT_GOLD_22K = "6,750"
 DEFAULT_SILVER = "88.00"
 
-# Cache live rates for 1 hour (saves API quota, improves reliability)
+# Cache: 15 min default (reload after 15 min = fresh rates)
 _rates_cache = {"gold": None, "silver": None, "updated": 0, "timestamp": None}
-CACHE_SECONDS = 3600  # 1 hour
+CACHE_SECONDS = int(os.environ.get("RATES_CACHE_SECONDS", "900"))  # 900 = 15 min
 
-def fetch_live_rates():
-    """Fetch live gold (22k) and silver prices in INR/gram using MetalpriceAPI (free tier: 100 req/month)."""
-    now = time.time()
-    if _rates_cache["gold"] and (now - _rates_cache["updated"]) < CACHE_SECONDS:
-        return _rates_cache["gold"], _rates_cache["silver"], _rates_cache.get("timestamp")
+# Indian market adjustment: Spot → Jeweller rate (Import duty + GST + Making + Margin)
+# Gold: ~12% total | Silver: ~24% total (approx, tune as needed)
+GOLD_INDIAN_MARKUP = float(os.environ.get("GOLD_INDIAN_MARKUP", "0.12"))   # 12%
+SILVER_INDIAN_MARKUP = float(os.environ.get("SILVER_INDIAN_MARKUP", "0.24"))  # 24%
 
+def _get_ist_timestamp():
+    """Return current time in 12hr Indian format (IST)."""
+    return datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%d %b %Y, %I:%M %p IST")
+
+def _fetch_metalpriceapi_rates():
+    """Fetch gold (22k) and silver in INR/gram via MetalpriceAPI (JSON API - stable, no scraping)."""
     api_key = os.environ.get("METALPRICEAPI_KEY")
     if not api_key:
-        return None, None, None
+        return None, None
 
     try:
         url = "https://api.metalpriceapi.com/v1/latest"
@@ -34,7 +42,7 @@ def fetch_live_rates():
         data = resp.json()
 
         if not data.get("success") or "rates" not in data:
-            return None, None, None
+            return None, None
 
         rates = data["rates"]
         inr_per_usd = rates.get("INR")
@@ -42,27 +50,41 @@ def fetch_live_rates():
         usd_per_oz_silver = rates.get("USDXAG")
 
         if not all([inr_per_usd, usd_per_oz_gold, usd_per_oz_silver]):
-            return None, None, None
+            return None, None
 
-        # 1 troy oz = 31.1035 grams; 22k = 22/24 of 24k gold
+        # Step 1: USD spot → INR per gram (22k gold, silver)
         grams_per_oz = 31.1035
-        gold_22k_per_gram_inr = (usd_per_oz_gold / grams_per_oz) * (22 / 24) * inr_per_usd
-        silver_per_gram_inr = (usd_per_oz_silver / grams_per_oz) * inr_per_usd
+        gold_22k_spot = (usd_per_oz_gold / grams_per_oz) * (22 / 24) * inr_per_usd
+        silver_spot = (usd_per_oz_silver / grams_per_oz) * inr_per_usd
 
-        gold_str = f"{gold_22k_per_gram_inr:,.0f}"
-        silver_str = f"{silver_per_gram_inr:,.2f}"
-        from datetime import datetime
-        ts = datetime.now().strftime("%d %b, %I:%M %p")
+        # Step 2: Indian market adjustment (Import duty + GST + Making + Margin)
+        gold_indian = gold_22k_spot * (1 + GOLD_INDIAN_MARKUP)
+        silver_indian = silver_spot * (1 + SILVER_INDIAN_MARKUP)
+
+        gold_str = f"{gold_indian:,.0f}"
+        silver_str = f"{silver_indian:,.2f}"
+        return gold_str, silver_str
+    except Exception:
+        pass
+    return None, None
+
+def fetch_live_rates(force_refresh=False):
+    """API-only: MetalpriceAPI + Indian market adjustment + cache. IST timestamp."""
+    now = time.time()
+    if not force_refresh and _rates_cache["gold"] and (now - _rates_cache["updated"]) < CACHE_SECONDS:
+        return _rates_cache["gold"], _rates_cache["silver"], _rates_cache.get("timestamp")
+
+    ts = _get_ist_timestamp()
+    gold_str, silver_str = _fetch_metalpriceapi_rates()
+    if gold_str and silver_str:
         _rates_cache["gold"] = gold_str
         _rates_cache["silver"] = silver_str
         _rates_cache["updated"] = now
         _rates_cache["timestamp"] = ts
         return gold_str, silver_str, ts
-    except Exception:
-        # Use cached values if API fails and we have them
-        if _rates_cache["gold"]:
-            return _rates_cache["gold"], _rates_cache["silver"], _rates_cache.get("timestamp")
-        return None, None, None
+    if _rates_cache["gold"]:
+        return _rates_cache["gold"], _rates_cache["silver"], _rates_cache.get("timestamp")
+    return None, None, None
 
 # In-memory database with Live Unsplash URLs for immediate rendering
 NEW_ARRIVALS = [
@@ -94,7 +116,8 @@ NEW_ARRIVALS = [
 
 @app.route('/')
 def home():
-    gold_price, silver_price, last_updated = fetch_live_rates()
+    force_refresh = request.args.get("refresh") == "1"
+    gold_price, silver_price, last_updated = fetch_live_rates(force_refresh=force_refresh)
     if gold_price is None:
         gold_price = DEFAULT_GOLD_22K
     if silver_price is None:
